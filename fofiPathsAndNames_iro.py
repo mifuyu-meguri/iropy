@@ -1,4 +1,5 @@
 from pathlib import Path
+from terminalFormatting_iro import *
 
 # Internal Constants
 _ILLEGAL_CHARACTERS_PRINTABLES_ONLY_NNO_ALTERNATIVES = {
@@ -33,16 +34,22 @@ _convertIllegalCharacters = str.maketrans(_ILLEGAL_CHARACTERS_PRINTABLES_ONLY_NN
 _deleteIllegalCharacters = str.maketrans({c: None for c in _ILLEGAL_CHARACTERS_NON_PRINTABLES_ONLY}) # DEPENDENCIES: _ILLEGAL_CHARACTERS_NON_PRINTABLES_ONLY
 
 # External Functions
-def convertToValidAndUniqueFofiName_cli(
+def convertToValidAndUniqueFofiName_returnsPath_cli(
         fofiParentPath:Path, fofiName:str, 
         duplicateFofiPrefix:str=" (", duplicateFofiStartingIndex:int=2, duplicateFofiSuffix:str=")", 
         illegalFofiPrefix:str="", illegalFofiSuffix:str="_",
         isLongPathEnabled:bool=False
-    ) -> tuple[Path|None, int]:
+    ) -> Path|None:
     """
     DEPENDENCIES:
         from pathlib import Path
 
+        terminalFormatting_iro:
+            BOLD
+            RED
+            GREEN
+            xPrint()
+            xInput()
         __file__:
             _ILLEGAL_CHARACTERS_PRINTABLES_ONLY_NNO_ALTERNATIVES
             _ILLEGAL_CHARACTERS_NON_PRINTABLES_ONLY
@@ -53,11 +60,8 @@ def convertToValidAndUniqueFofiName_cli(
         Since custom x = str(illegalFofiPrefix+illegalFofiSuffix) is not being checked for any potential issues that it might have,
             so ensure that you do not set its value to something dumb that might raise errors.
             Examples include, but are not limited to, setting x="" or putting illegal characters like "?" in x.
-    **RETURNS**:
-        (Path, 0): Valid output.
-        (None, 1): fofiParentPath doesn't exist.
-        (None, 2): Final fofi name is too long.
-        (None, 3): Final fofi path is too long.
+    RETURNS:
+        None if "fofiParentPath doesn't exist" else Path.
     **FUNCTIONS**:
         1. Checks if fofiParentPath is a folder.
         2. Converts fofiName into a valid and unique fofiName.
@@ -66,7 +70,7 @@ def convertToValidAndUniqueFofiName_cli(
     """
     #checks if parent folder exists
     if not fofiParentPath.is_dir():
-        return (None, 1)
+        return None
     #converts illegal characters. removes non-printable characters, trailing periods, and leading/trailing spaces.
     fofiName = fofiName.translate(_convertIllegalCharacters).translate(_deleteIllegalCharacters)
     fofiName = fofiName.lstrip(" ").rstrip(" .")
@@ -86,9 +90,14 @@ def convertToValidAndUniqueFofiName_cli(
         fofiPath = fofiPath.with_name(f"{stem}{duplicateFofiPrefix}{duplicateFofiStartingIndex}{duplicateFofiSuffix}{suffixes}")
         duplicateFofiStartingIndex+=1
     #counters long fofiPath and fofiName
-    if len(fofiPath.name) > 255:
-        return (None, 2)
-    if not isLongPathEnabled and len(str(fofiPath)) > 259:
-        return (None, 3)
+    if (len(fofiPath.name) > 255) or (not isLongPathEnabled and len(str(fofiPath)) > 259):
+        xPrint(f"The final fofiName is too long: {fofiPath.name}", BOLD + RED)
+        x = xInput("Enter new fofiName (with extensions): ", BOLD + RED, BOLD + GREEN)
+        return convertToValidAndUniqueFofiName_returnsPath_cli(
+            fofiParentPath, x, 
+            duplicateFofiPrefix, duplicateFofiStartingIndex, duplicateFofiSuffix, 
+            illegalFofiPrefix, illegalFofiSuffix,
+            isLongPathEnabled
+        )
     #returns
-    return (fofiPath, 0)
+    return fofiPath

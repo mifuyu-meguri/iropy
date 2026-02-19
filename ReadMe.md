@@ -1,3 +1,13 @@
+# fofiCopyMoveRename_iro
+Functions:
+- rename_cli()
+- move_cli()
+- copy_cli()
+
+# fofiPathsAndNames_iro:
+Functions:
+- convertToValidAndUniqueFofiName_returnsPath_cli()
+
 # fofiTrees_iro:
 Functions:
 - writeFofiTreeToTextFile()
